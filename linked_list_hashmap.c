@@ -448,4 +448,57 @@ static void __ensurecapacity(
     free(array_old);
 }
 
+void *hashmap_iterator_next(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter
+)
+{
+    hash_node_t *node;
+
+    node = iter->cur_linked;
+
+    /* if we have a node ready to look at on the chain.. */
+    if (node)
+    {
+        iter->cur_linked = node->next;
+        return node->ety.key;
+    }
+    /*  otherwise check if we have a node to look at */
+    else
+    {
+        for (; iter->cur < hmap->arraySize; iter->cur++)
+        {
+            node = &((hash_node_t *) hmap->array)[iter->cur];
+
+            if (node->ety.val)
+                break;
+        }
+
+        /*  exit if we are at the end */
+        if (hmap->arraySize == iter->cur)
+        {
+            return NULL;
+        }
+
+        node = &((hash_node_t *) hmap->array)[iter->cur];
+
+        if (node->next)
+        {
+            iter->cur_linked = node->next;
+        }
+
+        iter->cur += 1;
+        return node->ety.key;
+    }
+}
+
+void hashmap_iterator(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter
+)
+{
+    iter->cur = 0;
+    iter->cur_linked = NULL;
+}
+
 /*--------------------------------------------------------------79-characters-*/

@@ -26,6 +26,11 @@ typedef struct
     func_intcmp_f compare;
 } hashmap_t;
 
+typedef struct
+{
+    int cur;
+    void *cur_linked;
+} hashmap_iterator_t;
 
 hashmap_t *hashmap_new(
     func_inthash_f hash,
