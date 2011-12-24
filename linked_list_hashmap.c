@@ -68,8 +68,8 @@ inline static void __freenodes(
 /*----------------------------------------------------------------------------*/
 
 hashmap_t *hashmap_new(
-    func_inthash_f hash,
-    func_intcmp_f cmp
+    func_longhash_f hash,
+    func_longcmp_f cmp
 )
 {
     hashmap_t *hmap;

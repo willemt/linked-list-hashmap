@@ -1,12 +1,12 @@
-typedef unsigned int (
-    *func_inthash_f
-)   (
+typedef unsigned long (
+    *func_longhash_f
+)    (
     const void *
 );
 
-typedef int (
-    *func_intcmp_f
-)   (
+typedef long (
+    *func_longcmp_f
+)    (
     const void *,
     const void *
 );
@@ -22,8 +22,8 @@ typedef struct
     int count;
     int arraySize;
     void *array;
-    func_inthash_f hash;
-    func_intcmp_f compare;
+    func_longhash_f hash;
+    func_longcmp_f compare;
 } hashmap_t;
 
 typedef struct
@@ -33,8 +33,8 @@ typedef struct
 } hashmap_iterator_t;
 
 hashmap_t *hashmap_new(
-    func_inthash_f hash,
-    func_intcmp_f cmp
+    func_longhash_f hash,
+    func_longcmp_f cmp
 );
 
 int hashmap_count(
@@ -83,4 +83,14 @@ void *hashmap_put(
 void hashmap_put_entry(
     hashmap_t * hmap,
     hash_entry_t * entry
+);
+
+void *hashmap_iterator_next(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter
+);
+
+void hashmap_iterator(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter
 );
