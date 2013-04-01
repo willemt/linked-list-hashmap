@@ -83,6 +83,9 @@ hashmap_t *hashmap_new(
 }
 
 /*----------------------------------------------------------------------------*/
+
+/**
+ * @return number of items within hashmap */
 int hashmap_count(
     hashmap_t * hmap
 )
@@ -211,7 +214,8 @@ void *hashmap_get(
     return NULL;
 }
 
-/* Is this key inside this map? */
+/**
+ * Is this key inside this map? */
 int hashmap_contains_key(
     hashmap_t * hmap,
     const void *key
@@ -304,7 +308,8 @@ void hashmap_remove_entry(
     entry->val = NULL;
 }
 
-/** Remove this key and value from the map.
+/**
+ * Remove this key and value from the map.
  * @return value of key, or NULL on failure */
 void *hashmap_remove(
     hashmap_t * hmap,
@@ -330,7 +335,8 @@ inline static void __nodeassign(
     node->ety.val = val;
 }
 
-/* Associate key with val.
+/**
+ * Associate key with val.
  * Does not insert key if an equal key exists.
  * @return previous associated val, otherwise null */
 void *hashmap_put(
@@ -380,6 +386,8 @@ void *hashmap_put(
     return NULL;
 }
 
+/**
+ * Put this key/value entry into the hashmap */
 void hashmap_put_entry(
     hashmap_t * hmap,
     hash_entry_t * entry
@@ -448,6 +456,9 @@ static void __ensurecapacity(
     free(array_old);
 }
 
+/**
+ * Iterate to the next item on a hashmap iterator
+ * @return next item from iterator */
 void *hashmap_iterator_next(
     hashmap_t * hmap,
     hashmap_iterator_t * iter
@@ -492,6 +503,8 @@ void *hashmap_iterator_next(
     }
 }
 
+/**
+ * initialise a new hashmap iterator over this hashmap */
 void hashmap_iterator(
     hashmap_t * hmap,
     hashmap_iterator_t * iter
