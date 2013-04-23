@@ -51,18 +51,14 @@ static void __ensurecapacity(
     hashmap_t * hmap
 );
 
+/**
+ * Allocate memory for nodes. Used for chained nodes. */
 static hash_node_t *__allocnodes(
-    hashmap_t * hmap,
-    int count
-);
-
-inline static void __freenodes(
-    hashmap_t * hmap,
-    int count,
-    hash_node_t * nodes
+    unsigned int count
 )
 {
-    free(nodes);
+    // FIXME: make a chain node reservoir
+    return calloc(count, sizeof(hash_node_t));
 }
 
 /*----------------------------------------------------------------------------*/
@@ -76,7 +72,7 @@ hashmap_t *hashmap_new(
 
     hmap = calloc(1, sizeof(hashmap_t));
     hmap->arraySize = INITIAL_CAPACITY;
-    hmap->array = __allocnodes(hmap, hmap->arraySize);
+    hmap->array = __allocnodes(hmap->arraySize);
     hmap->hash = hash;
     hmap->compare = cmp;
     return hmap;
@@ -174,7 +170,8 @@ inline static unsigned int __doProbe(
 }
 
 /**
- * Get this key's value. */
+ * Get this key's value.
+ * @return key's item, otherwise NULL */
 void *hashmap_get(
     hashmap_t * hmap,
     const void *key
@@ -215,7 +212,8 @@ void *hashmap_get(
 }
 
 /**
- * Is this key inside this map? */
+ * Is this key inside this map?
+ * @return 1 if key is in hashmap, otherwise 0 */
 int hashmap_contains_key(
     hashmap_t * hmap,
     const void *key
@@ -264,7 +262,7 @@ void hashmap_remove_entry(
 
             memcpy(&node->ety, &tmp->ety, sizeof(hash_entry_t));
             node->next = tmp->next;
-            __freenodes(hmap, 1, tmp);
+            free(tmp);
         }
         else
         {
@@ -379,7 +377,7 @@ void *hashmap_put(
             key2 = node->ety.key;
         }
         while (node->next && (node = node->next));
-        node->next = __allocnodes(hmap, 1);
+        node->next = __allocnodes(1);
         __nodeassign(hmap, node->next, key, val);
     }
 
@@ -394,17 +392,6 @@ void hashmap_put_entry(
 )
 {
     hashmap_put(hmap, entry->key, entry->val);
-}
-
-// FIXME: make a chain node reservoir
-/**
- * Allocate memory for nodes. used for chained nodes. */
-static hash_node_t *__allocnodes(
-    hashmap_t * hmap,
-    int count
-)
-{
-    return calloc(count, sizeof(hash_node_t));
 }
 
 static void __ensurecapacity(
@@ -424,7 +411,7 @@ static void __ensurecapacity(
 
     /*  double array capacity */
     hmap->arraySize *= 2;
-    hmap->array = __allocnodes(hmap, hmap->arraySize);
+    hmap->array = __allocnodes(hmap->arraySize);
     hmap->count = 0;
 
     for (ii = 0; ii < asize_old; ii++)
@@ -506,7 +493,7 @@ void *hashmap_iterator_next(
 /**
  * initialise a new hashmap iterator over this hashmap */
 void hashmap_iterator(
-    hashmap_t * hmap,
+    hashmap_t * hmap __attribute__((__unused__)),
     hashmap_iterator_t * iter
 )
 {

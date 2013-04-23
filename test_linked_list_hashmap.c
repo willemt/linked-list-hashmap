@@ -8,7 +8,7 @@
 
 #include "linked_list_hashmap.h"
 
-static unsigned int __uint_hash(
+static unsigned long __uint_hash(
     const void *e1
 )
 {
@@ -18,7 +18,7 @@ static unsigned int __uint_hash(
     return i1;
 }
 
-static int __uint_compare(
+static long __uint_compare(
     const void *e1,
     const void *e2
 )
@@ -52,6 +52,20 @@ void TestHashmaplinked_Put(
     CuAssertTrue(tc, 1 == hashmap_count(hm));
 }
 
+void TestHashmaplinked_PutEntry(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+    hash_entry_t entry;
+
+    hm = hashmap_new(__uint_hash, __uint_compare);
+    entry.key = (void *) 50;
+    entry.val = (void *) 92
+    hashmap_put(hm, &entry);
+    CuAssertTrue(tc, 1 == hashmap_count(hm));
+}
+
 void TestHashmaplinked_Get(
     CuTest * tc
 )
@@ -69,6 +83,20 @@ void TestHashmaplinked_Get(
     CuAssertTrue(tc, 0 != val);
     CuAssertTrue(tc, val == 92);
 }
+
+void TestHashmaplinked_ContainsKey(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+
+    hm = hashmap_new(__uint_hash, __uint_compare);
+
+    hashmap_put(hm, (void *) 50, (void *) 92);
+
+    CuAssertTrue(tc, 1 == hashmap_contains_key(hm, (void*) 50));
+}
+
 
 void TestHashmaplinked_DoublePut(
     CuTest * tc
@@ -123,6 +151,25 @@ void TestHashmaplinked_Remove(
     CuAssertTrue(tc, 0 == hashmap_count(hm));
 }
 
+void TestHashmaplinked_ClearRemovesAll(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+
+    unsigned long val;
+
+    hm = hashmap_new(__uint_hash, __uint_compare);
+
+    hashmap_put(hm, (void *) 1, (void *) 92);
+    hashmap_put(hm, (void *) 2, (void *) 102);
+    hashmap_clear(hm);
+
+    val = (unsigned long) hashmap_get(hm, (void *) 1);
+    CuAssertTrue(tc, 0 == val);
+    CuAssertTrue(tc, 0 == hashmap_count(hm));
+}
+
 void TestHashmaplinked_Iterate(
     CuTest * tc
 )
@@ -134,8 +181,6 @@ void TestHashmaplinked_Iterate(
     hashmap_iterator_t iter;
 
     void *key;
-
-    unsigned long val;
 
     hm = hashmap_new(__uint_hash, __uint_compare);
     hm2 = hashmap_new(__uint_hash, __uint_compare);
