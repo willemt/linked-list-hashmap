@@ -35,9 +35,11 @@ void TestHashmaplinked_New(
 {
     hashmap_t *hm;
 
-    hm = hashmap_new(__uint_hash, __uint_compare);
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
 
     CuAssertTrue(tc, 0 == hashmap_count(hm));
+    CuAssertTrue(tc, 11 == hashmap_size(hm));
+    hashmap_freeall(hm);
 }
 
 void TestHashmaplinked_Put(
@@ -46,10 +48,112 @@ void TestHashmaplinked_Put(
 {
     hashmap_t *hm;
 
-    hm = hashmap_new(__uint_hash, __uint_compare);
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
     hashmap_put(hm, (void *) 50, (void *) 92);
 
     CuAssertTrue(tc, 1 == hashmap_count(hm));
+    hashmap_freeall(hm);
+}
+
+void TestHashmaplinked_PutEnsuresCapacity(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+
+    hm = hashmap_new(__uint_hash, __uint_compare, 1);
+    hashmap_put(hm, (void *) 50, (void *) 92);
+    hashmap_put(hm, (void *) 51, (void *) 92);
+
+    CuAssertTrue(tc, 2 == hashmap_count(hm));
+    CuAssertTrue(tc, 2 == hashmap_size(hm));
+    hashmap_freeall(hm);
+}
+
+void TestHashmaplinked_PutHandlesCollision(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+    unsigned long val;
+
+    hm = hashmap_new(__uint_hash, __uint_compare, 4);
+    hashmap_put(hm, (void *) 1, (void *) 92);
+    hashmap_put(hm, (void *) 5, (void *) 93);
+
+    CuAssertTrue(tc, 2 == hashmap_count(hm));
+
+    val = (unsigned long) hashmap_get(hm, (void *) 5);
+    CuAssertTrue(tc, 0 != val);
+    CuAssertTrue(tc, val == 93);
+
+    val = (unsigned long) hashmap_get(hm, (void *) 1);
+    CuAssertTrue(tc, 0 != val);
+    CuAssertTrue(tc, val == 92);
+    hashmap_freeall(hm);
+}
+
+void TestHashmaplinked_GetHandlesCollisionByTraversingChain(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+    unsigned long val;
+
+    hm = hashmap_new(__uint_hash, __uint_compare, 4);
+    hashmap_put(hm, (void *) 1, (void *) 92);
+    hashmap_put(hm, (void *) 5, (void *) 93);
+
+    CuAssertTrue(tc, 2 == hashmap_count(hm));
+
+    val = (unsigned long) hashmap_get(hm, (void *) 5);
+    CuAssertTrue(tc, 0 != val);
+    CuAssertTrue(tc, val == 93);
+    hashmap_freeall(hm);
+}
+
+void TestHashmaplinked_RemoveReturnsNullIfMissingAndTraversesChain(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+    unsigned long val;
+
+    hm = hashmap_new(__uint_hash, __uint_compare, 4);
+    hashmap_put(hm, (void *) 1, (void *) 92);
+
+    val = (unsigned long) hashmap_remove(hm, (void *) 5);
+    CuAssertTrue(tc, 0 == val);
+
+    val = (unsigned long) hashmap_remove(hm, (void *) 1);
+    CuAssertTrue(tc, 0 != val);
+    CuAssertTrue(tc, val == 92);
+
+    hashmap_freeall(hm);
+}
+
+void TestHashmaplinked_RemoveHandlesCollision(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+    unsigned long val;
+
+    hm = hashmap_new(__uint_hash, __uint_compare, 4);
+    hashmap_put(hm, (void *) 1, (void *) 92);
+    hashmap_put(hm, (void *) 5, (void *) 93);
+
+    val = (unsigned long) hashmap_remove(hm, (void *) 5);
+    CuAssertTrue(tc, 0 != val);
+    CuAssertTrue(tc, val == 93);
+    CuAssertTrue(tc, 1 == hashmap_count(hm));
+
+    val = (unsigned long) hashmap_remove(hm, (void *) 1);
+    CuAssertTrue(tc, 0 != val);
+    CuAssertTrue(tc, val == 92);
+    CuAssertTrue(tc, 0 == hashmap_count(hm));
+
+    hashmap_freeall(hm);
 }
 
 void TestHashmaplinked_PutEntry(
@@ -59,11 +163,12 @@ void TestHashmaplinked_PutEntry(
     hashmap_t *hm;
     hash_entry_t entry;
 
-    hm = hashmap_new(__uint_hash, __uint_compare);
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
     entry.key = (void *) 50;
-    entry.val = (void *) 92
-    hashmap_put(hm, &entry);
+    entry.val = (void *) 92;
+    hashmap_put_entry(hm, &entry);
     CuAssertTrue(tc, 1 == hashmap_count(hm));
+    hashmap_freeall(hm);
 }
 
 void TestHashmaplinked_Get(
@@ -74,7 +179,7 @@ void TestHashmaplinked_Get(
 
     unsigned long val;
 
-    hm = hashmap_new(__uint_hash, __uint_compare);
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
 
     hashmap_put(hm, (void *) 50, (void *) 92);
 
@@ -82,6 +187,7 @@ void TestHashmaplinked_Get(
 
     CuAssertTrue(tc, 0 != val);
     CuAssertTrue(tc, val == 92);
+    hashmap_freeall(hm);
 }
 
 void TestHashmaplinked_ContainsKey(
@@ -90,11 +196,12 @@ void TestHashmaplinked_ContainsKey(
 {
     hashmap_t *hm;
 
-    hm = hashmap_new(__uint_hash, __uint_compare);
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
 
     hashmap_put(hm, (void *) 50, (void *) 92);
 
     CuAssertTrue(tc, 1 == hashmap_contains_key(hm, (void*) 50));
+    hashmap_freeall(hm);
 }
 
 
@@ -106,11 +213,12 @@ void TestHashmaplinked_DoublePut(
 
     unsigned long val;
 
-    hm = hashmap_new(__uint_hash, __uint_compare);
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
     hashmap_put(hm, (void *) 50, (void *) 92);
     hashmap_put(hm, (void *) 50, (void *) 23);
     val = (unsigned long) hashmap_get(hm, (void *) 50);
     CuAssertTrue(tc, val == 23);
+    hashmap_freeall(hm);
 }
 
 void TestHashmaplinked_Get2(
@@ -121,7 +229,7 @@ void TestHashmaplinked_Get2(
 
     unsigned long val;
 
-    hm = hashmap_new(__uint_hash, __uint_compare);
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
     hashmap_put(hm, (void *) 50, (void *) 92);
     hashmap_put(hm, (void *) 49, (void *) 91);
     hashmap_put(hm, (void *) 48, (void *) 90);
@@ -130,6 +238,30 @@ void TestHashmaplinked_Get2(
     hashmap_put(hm, (void *) 45, (void *) 87);
     val = (unsigned long) hashmap_get(hm, (void *) 48);
     CuAssertTrue(tc, val == 90);
+    hashmap_freeall(hm);
+}
+
+void TestHashmaplinked_IncreaseCapacityDoesNotBreakHashmap(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+
+    unsigned long val;
+
+    hm = hashmap_new(__uint_hash, __uint_compare, 4);
+    hashmap_put(hm, (void *) 1, (void *) 90);
+    hashmap_put(hm, (void *) 5, (void *) 91);
+    hashmap_put(hm, (void *) 2, (void *) 92);
+    hashmap_increase_capacity(hm,2);
+    CuAssertTrue(tc, 3 == hashmap_count(hm));
+    val = (unsigned long) hashmap_get(hm, (void *) 1);
+    CuAssertTrue(tc, val == 90);
+    val = (unsigned long) hashmap_get(hm, (void *) 5);
+    CuAssertTrue(tc, val == 91);
+    val = (unsigned long) hashmap_get(hm, (void *) 2);
+    CuAssertTrue(tc, val == 92);
+    hashmap_freeall(hm);
 }
 
 void TestHashmaplinked_Remove(
@@ -140,7 +272,7 @@ void TestHashmaplinked_Remove(
 
     unsigned long val;
 
-    hm = hashmap_new(__uint_hash, __uint_compare);
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
 
     hashmap_put(hm, (void *) 50, (void *) 92);
 
@@ -149,6 +281,7 @@ void TestHashmaplinked_Remove(
     CuAssertTrue(tc, 0 != val);
     CuAssertTrue(tc, val == 92);
     CuAssertTrue(tc, 0 == hashmap_count(hm));
+    hashmap_freeall(hm);
 }
 
 void TestHashmaplinked_ClearRemovesAll(
@@ -159,7 +292,7 @@ void TestHashmaplinked_ClearRemovesAll(
 
     unsigned long val;
 
-    hm = hashmap_new(__uint_hash, __uint_compare);
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
 
     hashmap_put(hm, (void *) 1, (void *) 92);
     hashmap_put(hm, (void *) 2, (void *) 102);
@@ -168,6 +301,25 @@ void TestHashmaplinked_ClearRemovesAll(
     val = (unsigned long) hashmap_get(hm, (void *) 1);
     CuAssertTrue(tc, 0 == val);
     CuAssertTrue(tc, 0 == hashmap_count(hm));
+    hashmap_freeall(hm);
+}
+
+/* The clear function will need to clean the whole chain */
+void TestHashmaplinked_ClearHandlesCollision(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+
+    hm = hashmap_new(__uint_hash, __uint_compare, 4);
+
+    hashmap_put(hm, (void *) 1, (void *) 50);
+    /* all of the rest cause collisions */
+    hashmap_put(hm, (void *) 5, (void *) 51);
+    hashmap_put(hm, (void *) 9, (void *) 52);
+    hashmap_clear(hm);
+    CuAssertTrue(tc, 0 == hashmap_count(hm));
+    hashmap_freeall(hm);
 }
 
 void TestHashmaplinked_Iterate(
@@ -182,8 +334,8 @@ void TestHashmaplinked_Iterate(
 
     void *key;
 
-    hm = hashmap_new(__uint_hash, __uint_compare);
-    hm2 = hashmap_new(__uint_hash, __uint_compare);
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
+    hm2 = hashmap_new(__uint_hash, __uint_compare, 11);
 
     hashmap_put(hm, (void *) 50, (void *) 92);
     hashmap_put(hm, (void *) 49, (void *) 91);
@@ -209,4 +361,39 @@ void TestHashmaplinked_Iterate(
 
     /*  check if the hashmap is empty */
     CuAssertTrue(tc, 0 == hashmap_count(hm2));
+    hashmap_freeall(hm);
+}
+
+void TestHashmaplinked_IterateHandlesCollisions(
+    CuTest * tc
+)
+{
+    hashmap_t *hm, *hm2;
+
+    hashmap_iterator_t iter;
+
+    void *key;
+
+    hm = hashmap_new(__uint_hash, __uint_compare, 4);
+    hm2 = hashmap_new(__uint_hash, __uint_compare, 4);
+
+    hashmap_put(hm, (void *) 1, (void *) 92);
+    hashmap_put(hm, (void *) 5, (void *) 91);
+    hashmap_put(hm, (void *) 9, (void *) 90);
+
+    hashmap_put(hm2, (void *) 1, (void *) 92);
+    hashmap_put(hm2, (void *) 5, (void *) 91);
+    hashmap_put(hm2, (void *) 9, (void *) 90);
+
+    hashmap_iterator(hm, &iter);
+
+    /*  remove every key we iterate on */
+    while ((key = hashmap_iterator_next(hm, &iter)))
+    {
+        CuAssertTrue(tc, NULL != hashmap_remove(hm2, key));
+    }
+
+    /*  check if the hashmap is empty */
+    CuAssertTrue(tc, 0 == hashmap_count(hm2));
+    hashmap_freeall(hm);
 }

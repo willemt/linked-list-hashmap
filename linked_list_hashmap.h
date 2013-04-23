@@ -34,10 +34,15 @@ typedef struct
 
 hashmap_t *hashmap_new(
     func_longhash_f hash,
-    func_longcmp_f cmp
+    func_longcmp_f cmp,
+    unsigned int initial_capacity
 );
 
 int hashmap_count(
+    hashmap_t * hmap
+);
+
+int hashmap_size(
     hashmap_t * hmap
 );
 
@@ -94,3 +99,7 @@ void hashmap_iterator(
     hashmap_t * hmap,
     hashmap_iterator_t * iter
 );
+
+void hashmap_increase_capacity(
+    hashmap_t * hmap,
+    unsigned int factor);

@@ -36,8 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "linked_list_hashmap.h"
 
 /* when we call for more capacity */
-#define SPACERATIO 0.1
-#define INITIAL_CAPACITY 11
+#define SPACERATIO 0.9
 
 typedef struct hash_node_s hash_node_t;
 
@@ -65,13 +64,14 @@ static hash_node_t *__allocnodes(
 
 hashmap_t *hashmap_new(
     func_longhash_f hash,
-    func_longcmp_f cmp
+    func_longcmp_f cmp,
+    unsigned int initial_capacity
 )
 {
     hashmap_t *hmap;
 
     hmap = calloc(1, sizeof(hashmap_t));
-    hmap->arraySize = INITIAL_CAPACITY;
+    hmap->arraySize = initial_capacity;
     hmap->array = __allocnodes(hmap->arraySize);
     hmap->hash = hash;
     hmap->compare = cmp;
@@ -87,6 +87,15 @@ int hashmap_count(
 )
 {
     return hmap->count;
+}
+
+/**
+ * @return size of the array used within hashmap */
+int hashmap_size(
+    hashmap_t * hmap
+)
+{
+    return hmap->arraySize;
 }
 
 /**
@@ -181,27 +190,23 @@ void *hashmap_get(
 
     hash_node_t *node;
 
-    const void *key2;
-
     if (0 == hashmap_count(hmap))
         return NULL;
 
     probe = __doProbe(hmap, key);
     node = &((hash_node_t *) hmap->array)[probe];
-    key2 = node->ety.key;
-
-    if (NULL == key2)
+    
+    if (NULL == node->ety.key)
     {
         return NULL;    /* this one wasn't assigned */
     }
     else
     {
+        /* iterate down the node's linked list chain */
         while (node)
         {
-            key2 = node->ety.key;
-            if (0 == hmap->compare(key, key2))
+            if (0 == hmap->compare(key, node->ety.key))
             {
-                assert(node->ety.val);
                 return (void *) node->ety.val;
             }
             node = node->next;
@@ -230,78 +235,59 @@ void hashmap_remove_entry(
     const void *key
 )
 {
-    unsigned int probe;
+    hash_node_t *node, *node_parent;
 
-    hash_node_t *node;
+    node = &((hash_node_t *) hmap->array)[__doProbe(hmap, key)];
 
-    void *key2;
+    if (!node->ety.key)
+        goto notfound;
 
-    assert(key);
+    node_parent = NULL;
 
-    /* it's nice if we have guaranteed success */
+    do {
+        if (0 != hmap->compare(key, node->ety.key))
+        {
+            /* does not match, lets traverse the chain.. */
+            node_parent = node;
+            node = node->next;
+            continue;
+        }
 
-    probe = __doProbe(hmap, key);
-    node = &((hash_node_t *) hmap->array)[probe];
-    key2 = node->ety.key;
-
-    assert(0 <= hmap->count);
-
-    if (!key2)
-    {
-
-    }
-    else if (0 == hmap->compare(key, key2))
-    {
         memcpy(entry, &node->ety, sizeof(hash_entry_t));
 
-        /* if we forget about collisions we will suffer */
-        /* work linked list */
-        if (node->next)
+        /* I am a root node on the array */
+        if (!node_parent)
         {
-            hash_node_t *tmp = node->next;
-
-            memcpy(&node->ety, &tmp->ety, sizeof(hash_entry_t));
-            node->next = tmp->next;
-            free(tmp);
+            /* I have a node on my chain. This node will replace me */
+            if (node->next)
+            {
+                hash_node_t *tmp;
+                
+                tmp = node->next;
+                memcpy(&node->ety, &tmp->ety, sizeof(hash_entry_t));
+                /* Replace me with my next on chain */
+                node->next = tmp->next;
+                free(tmp);
+            }
+            else
+            {
+                /* un-assign */
+                node->ety.key = NULL;
+            }
         }
         else
         {
-            /* I'm implying that pointing towards NULL is a bottleneck */
-            node->ety.key = NULL;
-            node->ety.val = NULL;
+            /* Replace me with my next on chain */
+            node_parent->next = node->next;
+            free(node);
         }
+
         hmap->count--;
         return;
-    }
-    else
-    {
-        hash_node_t *node_parent;
 
-        node_parent = node;
-        node = node->next;
-
-        /* check chain */
-        while (node)
-        {
-            assert(node->ety.key);
-            key2 = node->ety.key;
-
-            if (0 == hmap->compare(key, key2))
-            {
-                memcpy(entry, &node->ety, sizeof(hash_entry_t));
-                /* do a node splice */
-                node_parent->next = node->next;
-                free(node);
-                hmap->count--;
-                return;
-            }
-
-            node_parent = node;
-            node = node->next;
-        }
-    }
-
-    /* only gets here if it doesn't exist */
+    } while (node);
+   
+notfound:
     entry->key = NULL;
     entry->val = NULL;
 }
@@ -340,45 +326,44 @@ inline static void __nodeassign(
 void *hashmap_put(
     hashmap_t * hmap,
     void *key,
-    void *val
+    void *val_new
 )
 {
     hash_node_t *node;
 
-    void *key2;
-
-    assert(key && val);
+    assert(key);
+    assert(val_new);
 
     __ensurecapacity(hmap);
 
     node = &((hash_node_t *) hmap->array)[__doProbe(hmap, key)];
 
     assert(node);
-    key2 = node->ety.key;
 
     /* this one wasn't assigned */
-    if (NULL == key2)
+    if (NULL == node->ety.key)
     {
-        __nodeassign(hmap, node, key, val);
+        __nodeassign(hmap, node, key, val_new);
     }
     else
     {
         /* check the linked list */
         do
         {
-            /* replacing val */
-            if (0 == hmap->compare(key, key2))
+            /* if same key, then we are just replacing val */
+            if (0 == hmap->compare(key, node->ety.key))
             {
-                void *val_prev = node->ety.val;
-
-                node->ety.val = val;
+                void *val_prev;
+                
+                val_prev = node->ety.val;
+                node->ety.val = val_new;
                 return val_prev;
             }
-            key2 = node->ety.key;
         }
         while (node->next && (node = node->next));
+
         node->next = __allocnodes(1);
-        __nodeassign(hmap, node->next, key, val);
+        __nodeassign(hmap, node->next, key, val_new);
     }
 
     return NULL;
@@ -394,23 +379,23 @@ void hashmap_put_entry(
     hashmap_put(hmap, entry->key, entry->val);
 }
 
-static void __ensurecapacity(
-    hashmap_t * hmap
-)
+/**
+ * Increase hashmap capacity.
+ * @param factor : increase by this factor */
+void hashmap_increase_capacity(
+    hashmap_t * hmap,
+    unsigned int factor)
 {
     hash_node_t *array_old;
 
     int ii, asize_old;
-
-    if ((float) hmap->count / hmap->arraySize < SPACERATIO)
-        return;
 
     /*  stored old array */
     array_old = hmap->array;
     asize_old = hmap->arraySize;
 
     /*  double array capacity */
-    hmap->arraySize *= 2;
+    hmap->arraySize *= factor;
     hmap->array = __allocnodes(hmap->arraySize);
     hmap->count = 0;
 
@@ -441,6 +426,20 @@ static void __ensurecapacity(
     }
 
     free(array_old);
+}
+
+static void __ensurecapacity(
+    hashmap_t * hmap
+)
+{
+    if ((float) hmap->count / hmap->arraySize < SPACERATIO)
+    {
+        return;
+    }
+    else
+    {
+        hashmap_increase_capacity(hmap,2);
+    }
 }
 
 /**
