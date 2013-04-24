@@ -322,6 +322,19 @@ void TestHashmaplinked_ClearHandlesCollision(
     hashmap_freeall(hm);
 }
 
+void TestHashmaplinked_DoesNotHaveNextForEmptyIterator(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+    hashmap_iterator_t iter;
+
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
+    hashmap_iterator(hm, &iter);
+    CuAssertTrue(tc, 0 == hashmap_iterator_has_next(hm, &iter));
+    hashmap_freeall(hm);
+}
+
 void TestHashmaplinked_Iterate(
     CuTest * tc
 )
@@ -397,3 +410,6 @@ void TestHashmaplinked_IterateHandlesCollisions(
     CuAssertTrue(tc, 0 == hashmap_count(hm2));
     hashmap_freeall(hm);
 }
+
+
+

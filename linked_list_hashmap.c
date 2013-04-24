@@ -469,7 +469,21 @@ int hashmap_iterator_has_next(
 
 /**
  * Iterate to the next item on a hashmap iterator
- * @return next item from iterator */
+ * @return next item value from iterator */
+void *hashmap_iterator_next_value(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter
+)
+{
+    void* key;
+
+    key = hashmap_iterator_next(hmap,iter);
+    return hashmap_get(hmap,key);
+}
+
+/**
+ * Iterate to the next item on a hashmap iterator
+ * @return next item key from iterator */
 void *hashmap_iterator_next(
     hashmap_t * hmap,
     hashmap_iterator_t * iter

@@ -100,6 +100,10 @@ void *hashmap_iterator_next(
     hashmap_iterator_t * iter
 );
 
+void *hashmap_iterator_next_value(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter);
+
 void hashmap_iterator(
     hashmap_t * hmap,
     hashmap_iterator_t * iter
