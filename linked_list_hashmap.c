@@ -454,7 +454,7 @@ int hashmap_iterator_has_next(
             hash_node_t *node;
 
             node = &((hash_node_t *) hmap->array)[iter->cur];
-            if (node->ety.val)
+            if (node->ety.key)
                 break;
         }
 

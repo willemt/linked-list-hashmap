@@ -335,6 +335,21 @@ void TestHashmaplinked_DoesNotHaveNextForEmptyIterator(
     hashmap_freeall(hm);
 }
 
+void TestHashmaplinked_RemoveItemDoesNotHaveNextForEmptyIterator(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+    hashmap_iterator_t iter;
+
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
+    hashmap_put(hm, (void *) 9, (void *) 52);
+    hashmap_remove(hm, (void *) 9);
+    hashmap_iterator(hm, &iter);
+    CuAssertTrue(tc, 0 == hashmap_iterator_has_next(hm, &iter));
+    hashmap_freeall(hm);
+}
+
 void TestHashmaplinked_Iterate(
     CuTest * tc
 )
