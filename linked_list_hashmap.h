@@ -90,6 +90,14 @@ void hashmap_put_entry(
     hash_entry_t * entry
 );
 
+void* hashmap_iterator_peek(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter);
+
+void* hashmap_iterator_peek_value(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter);
+
 int hashmap_iterator_has_next(
     hashmap_t * hmap,
     hashmap_iterator_t * iter

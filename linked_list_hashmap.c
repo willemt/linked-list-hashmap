@@ -442,7 +442,7 @@ static void __ensurecapacity(
     }
 }
 
-int hashmap_iterator_has_next(
+void* hashmap_iterator_peek(
     hashmap_t * hmap,
     hashmap_iterator_t * iter
 )
@@ -454,17 +454,35 @@ int hashmap_iterator_has_next(
             hash_node_t *node;
 
             node = &((hash_node_t *) hmap->array)[iter->cur];
+
             if (node->ety.key)
-                break;
+                return node->ety.key;
         }
 
-        if (iter->cur == hmap->arraySize)
-        {
-            return 0;
-        }
+        return NULL;
     }
+    else
+    {
+        hash_node_t *node;
 
-    return 1;
+        node = iter->cur_linked;
+        return node->ety.key;
+    }
+}
+
+void* hashmap_iterator_peek_value(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter)
+{
+    return hashmap_get(hmap,hashmap_iterator_peek(hmap,iter));
+}
+
+int hashmap_iterator_has_next(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter
+)
+{
+    return NULL != hashmap_iterator_peek(hmap,iter);
 }
 
 /**
@@ -475,10 +493,7 @@ void *hashmap_iterator_next_value(
     hashmap_iterator_t * iter
 )
 {
-    void* key;
-
-    key = hashmap_iterator_next(hmap,iter);
-    return hashmap_get(hmap,key);
+    return hashmap_get(hmap,hashmap_iterator_next(hmap,iter));
 }
 
 /**
