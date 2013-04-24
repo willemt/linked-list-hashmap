@@ -442,6 +442,31 @@ static void __ensurecapacity(
     }
 }
 
+int hashmap_iterator_has_next(
+    hashmap_t * hmap,
+    hashmap_iterator_t * iter
+)
+{
+    if (NULL == iter->cur_linked)
+    {
+        for (; iter->cur < hmap->arraySize; iter->cur++)
+        {
+            hash_node_t *node;
+
+            node = &((hash_node_t *) hmap->array)[iter->cur];
+            if (node->ety.val)
+                break;
+        }
+
+        if (iter->cur == hmap->arraySize)
+        {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 /**
  * Iterate to the next item on a hashmap iterator
  * @return next item from iterator */
