@@ -82,9 +82,7 @@ hashmap_t *hashmap_new(
 
 /**
  * @return number of items within hashmap */
-int hashmap_count(
-    hashmap_t * hmap
-)
+int hashmap_count(const hashmap_t * hmap)
 {
     return hmap->count;
 }

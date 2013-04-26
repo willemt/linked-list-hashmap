@@ -38,9 +38,7 @@ hashmap_t *hashmap_new(
     unsigned int initial_capacity
 );
 
-int hashmap_count(
-    hashmap_t * hmap
-);
+int hashmap_count(const hashmap_t * hmap);
 
 int hashmap_size(
     hashmap_t * hmap
