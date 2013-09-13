@@ -142,16 +142,17 @@ void TestHashmaplinked_RemoveHandlesCollision(
     hm = hashmap_new(__uint_hash, __uint_compare, 4);
     hashmap_put(hm, (void *) 1, (void *) 92);
     hashmap_put(hm, (void *) 5, (void *) 93);
+    hashmap_put(hm, (void *) 9, (void *) 94);
 
     val = (unsigned long) hashmap_remove(hm, (void *) 5);
     CuAssertTrue(tc, 0 != val);
     CuAssertTrue(tc, val == 93);
-    CuAssertTrue(tc, 1 == hashmap_count(hm));
+    CuAssertTrue(tc, 2 == hashmap_count(hm));
 
     val = (unsigned long) hashmap_remove(hm, (void *) 1);
     CuAssertTrue(tc, 0 != val);
     CuAssertTrue(tc, val == 92);
-    CuAssertTrue(tc, 0 == hashmap_count(hm));
+    CuAssertTrue(tc, 1 == hashmap_count(hm));
 
     hashmap_freeall(hm);
 }
@@ -218,6 +219,7 @@ void TestHashmaplinked_DoublePut(
     hashmap_put(hm, (void *) 50, (void *) 23);
     val = (unsigned long) hashmap_get(hm, (void *) 50);
     CuAssertTrue(tc, val == 23);
+    CuAssertTrue(tc, 1 == hashmap_count(hm));
     hashmap_freeall(hm);
 }
 
@@ -426,5 +428,52 @@ void TestHashmaplinked_IterateHandlesCollisions(
     hashmap_freeall(hm);
 }
 
+void TestHashmaplinked_IterateAndRemoveDoesntBreakIteration(
+    CuTest * tc
+)
+{
+    hashmap_t *hm;
+    hashmap_t *hm2;
+    hashmap_iterator_t iter;
+    void *key;
 
+    hm = hashmap_new(__uint_hash, __uint_compare, 11);
+    hm2 = hashmap_new(__uint_hash, __uint_compare, 11);
+
+    hashmap_put(hm, (void *) 50, (void *) 92);
+    hashmap_put(hm, (void *) 49, (void *) 91);
+    hashmap_put(hm, (void *) 48, (void *) 90);
+    hashmap_put(hm, (void *) 47, (void *) 89);
+    hashmap_put(hm, (void *) 46, (void *) 88);
+    hashmap_put(hm, (void *) 45, (void *) 87);
+    /*  the following 3 collide: */
+    hashmap_put(hm, (void *) 1, (void *) 92);
+    hashmap_put(hm, (void *) 5, (void *) 91);
+    hashmap_put(hm, (void *) 9, (void *) 90);
+
+    hashmap_put(hm2, (void *) 50, (void *) 92);
+    hashmap_put(hm2, (void *) 49, (void *) 91);
+    hashmap_put(hm2, (void *) 48, (void *) 90);
+    hashmap_put(hm2, (void *) 47, (void *) 89);
+    hashmap_put(hm2, (void *) 46, (void *) 88);
+    hashmap_put(hm2, (void *) 45, (void *) 87);
+    /*  the following 3 collide: */
+    hashmap_put(hm2, (void *) 1, (void *) 92);
+    hashmap_put(hm2, (void *) 5, (void *) 91);
+    hashmap_put(hm2, (void *) 9, (void *) 90);
+
+    hashmap_iterator(hm, &iter);
+
+    /*  remove every key we iterate on */
+    while ((key = hashmap_iterator_next(hm, &iter)))
+    {
+        CuAssertTrue(tc, NULL != hashmap_remove(hm2, key));
+        hashmap_remove(hm,key);
+    }
+
+    /*  check if the hashmap is empty */
+    CuAssertTrue(tc, 0 == hashmap_count(hm2));
+    hashmap_freeall(hm);
+    hashmap_freeall(hm2);
+}
 
