@@ -76,15 +76,11 @@ hashmap_t *hashmap_new(
     return h;
 }
 
-/**
- * @return number of items within hash */
 int hashmap_count(const hashmap_t * h)
 {
     return h->count;
 }
 
-/**
- * @return size of the array used within hash */
 int hashmap_size(
     hashmap_t * h
 )
@@ -111,8 +107,6 @@ static void __node_empty(
     }
 }
 
-/**
- * Empty this hash. */
 void hashmap_clear(
     hashmap_t * h
 )
@@ -142,8 +136,6 @@ void hashmap_clear(
     assert(0 == hashmap_count(h));
 }
 
-/**
- * Free all the memory related to this hash. */
 void hashmap_free(
     hashmap_t * h
 )
@@ -152,9 +144,6 @@ void hashmap_free(
     hashmap_clear(h);
 }
 
-/**
- * Free all the memory related to this hash.
- * This includes the actual h itself. */
 void hashmap_freeall(
     hashmap_t * h
 )
@@ -172,9 +161,6 @@ inline static unsigned int __doProbe(
     return h->hash(key) % h->arraySize;
 }
 
-/**
- * Get this key's value.
- * @return key's item, otherwise NULL */
 void *hashmap_get(
     hashmap_t * h,
     const void *key
@@ -210,9 +196,6 @@ void *hashmap_get(
     return NULL;
 }
 
-/**
- * Is this key inside this map?
- * @return 1 if key is in hash, otherwise 0 */
 int hashmap_contains_key(
     hashmap_t * h,
     const void *key
@@ -221,8 +204,6 @@ int hashmap_contains_key(
     return (NULL != hashmap_get(h, key));
 }
 
-/**
- * Remove the value refrenced by this key from the hash. */
 void hashmap_remove_entry(
     hashmap_t * h,
     hash_entry_t * entry,
@@ -286,9 +267,6 @@ notfound:
     entry->val = NULL;
 }
 
-/**
- * Remove this key and value from the map.
- * @return value of key, or NULL on failure */
 void *hashmap_remove(
     hashmap_t * h,
     const void *key
@@ -316,10 +294,6 @@ inline static void __nodeassign(
     node->ety.val = val;
 }
 
-/**
- * Associate key with val.
- * Does not insert key if an equal key exists.
- * @return previous associated val; otherwise NULL */
 void *hashmap_put(
     hashmap_t * h,
     void *key,
@@ -370,8 +344,6 @@ void *hashmap_put(
     return NULL;
 }
 
-/**
- * Put this key/value entry into the hash */
 void hashmap_put_entry(
     hashmap_t * h,
     hash_entry_t * entry
@@ -380,9 +352,6 @@ void hashmap_put_entry(
     hashmap_put(h, entry->key, entry->val);
 }
 
-/**
- * Increase hash capacity.
- * @param factor : increase by this factor */
 void hashmap_increase_capacity(
     hashmap_t * h,
     unsigned int factor)
@@ -486,9 +455,6 @@ int hashmap_iterator_has_next(
     return NULL != hashmap_iterator_peek(h,iter);
 }
 
-/**
- * Iterate to the next item on a hash iterator
- * @return next item value from iterator */
 void *hashmap_iterator_next_value(
     hashmap_t * h,
     hashmap_iterator_t * iter
@@ -501,9 +467,6 @@ void *hashmap_iterator_next_value(
     return hashmap_get(h,k);
 }
 
-/**
- * Iterate to the next item on a hash iterator
- * @return next item key from iterator */
 void *hashmap_iterator_next(
     hashmap_t * h,
     hashmap_iterator_t * iter
@@ -573,10 +536,6 @@ void *hashmap_iterator_next(
     }
 }
 
-/**
- * Initialise a new hash iterator over this hash
- * It is safe to remove items while iterating.
- */
 void hashmap_iterator(
     hashmap_t * h __attribute__((__unused__)),
     hashmap_iterator_t * iter
