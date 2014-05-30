@@ -38,12 +38,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* when we call for more capacity */
 #define SPACERATIO 0.5
 
-typedef struct hash_node_s hash_node_t;
+typedef struct node_s node_t;
 
-struct hash_node_s
+struct node_s
 {
-    hash_entry_t ety;
-    hash_node_t *next;
+    entry_t ety;
+    node_t *next;
 };
 
 static void __ensurecapacity(
@@ -52,12 +52,12 @@ static void __ensurecapacity(
 
 /**
  * Allocate memory for nodes. Used for chained nodes. */
-static hash_node_t *__allocnodes(
+static node_t *__allocnodes(
     unsigned int count
 )
 {
     // FIXME: make a chain node reservoir
-    return calloc(count, sizeof(hash_node_t));
+    return calloc(count, sizeof(node_t));
 }
 
 hashmap_t *hashmap_new(
@@ -92,7 +92,7 @@ int hashmap_size(
  * free all the nodes in a chain, recursively. */
 static void __node_empty(
     hashmap_t * h,
-    hash_node_t * node
+    node_t * node
 )
 {
     if (NULL == node)
@@ -115,9 +115,9 @@ void hashmap_clear(
 
     for (ii = 0; ii < h->arraySize; ii++)
     {
-        hash_node_t *node;
+        node_t *node;
 
-        node = &((hash_node_t *) h->array)[ii];
+        node = &((node_t *) h->array)[ii];
 
         if (NULL == node->ety.key)
             continue;
@@ -168,13 +168,13 @@ void *hashmap_get(
 {
     unsigned int probe;
 
-    hash_node_t *node;
+    node_t *node;
 
     if (0 == hashmap_count(h) || !key)
         return NULL;
 
     probe = __doProbe(h, key);
-    node = &((hash_node_t *) h->array)[probe];
+    node = &((node_t *) h->array)[probe];
     
     if (NULL == node->ety.key)
     {
@@ -206,13 +206,13 @@ int hashmap_contains_key(
 
 void hashmap_remove_entry(
     hashmap_t * h,
-    hash_entry_t * entry,
+    entry_t * entry,
     const void *key
 )
 {
-    hash_node_t *n, *n_parent;
+    node_t *n, *n_parent;
 
-    n = &((hash_node_t *) h->array)[__doProbe(h, key)];
+    n = &((node_t *) h->array)[__doProbe(h, key)];
 
     if (!n->ety.key)
         goto notfound;
@@ -228,7 +228,7 @@ void hashmap_remove_entry(
             continue;
         }
 
-        memcpy(entry, &n->ety, sizeof(hash_entry_t));
+        memcpy(entry, &n->ety, sizeof(entry_t));
 
         /* I am a root node on the array */
         if (!n_parent)
@@ -236,10 +236,10 @@ void hashmap_remove_entry(
             /* I have a node on my chain. This node will replace me */
             if (n->next)
             {
-                hash_node_t *tmp;
+                node_t *tmp;
                 
                 tmp = n->next;
-                memcpy(&n->ety, &tmp->ety, sizeof(hash_entry_t));
+                memcpy(&n->ety, &tmp->ety, sizeof(entry_t));
                 /* Replace me with my next on chain */
                 n->next = tmp->next;
                 free(tmp);
@@ -272,7 +272,7 @@ void *hashmap_remove(
     const void *key
 )
 {
-    hash_entry_t entry;
+    entry_t entry;
 
     hashmap_remove_entry(h, &entry, key);
     return (void *) entry.val;
@@ -280,7 +280,7 @@ void *hashmap_remove(
 
 inline static void __nodeassign(
     hashmap_t * h,
-    hash_node_t * node,
+    node_t * node,
     void *key,
     void *val
 )
@@ -300,7 +300,7 @@ void *hashmap_put(
     void *val_new
 )
 {
-    hash_node_t *node;
+    node_t *node;
 
     if (!key || !val_new)
         return NULL;
@@ -311,7 +311,7 @@ void *hashmap_put(
 
     __ensurecapacity(h);
 
-    node = &((hash_node_t *) h->array)[__doProbe(h, key)];
+    node = &((node_t *) h->array)[__doProbe(h, key)];
 
     assert(node);
 
@@ -346,7 +346,7 @@ void *hashmap_put(
 
 void hashmap_put_entry(
     hashmap_t * h,
-    hash_entry_t * entry
+    entry_t * entry
 )
 {
     hashmap_put(h, entry->key, entry->val);
@@ -356,7 +356,7 @@ void hashmap_increase_capacity(
     hashmap_t * h,
     unsigned int factor)
 {
-    hash_node_t *array_old;
+    node_t *array_old;
     int ii, asize_old;
 
     /*  stored old array */
@@ -370,9 +370,9 @@ void hashmap_increase_capacity(
 
     for (ii = 0; ii < asize_old; ii++)
     {
-        hash_node_t *node;
+        node_t *node;
         
-        node = &((hash_node_t *) array_old)[ii];
+        node = &((node_t *) array_old)[ii];
 
         /*  if key is null */
         if (NULL == node->ety.key)
@@ -385,7 +385,7 @@ void hashmap_increase_capacity(
 
         while (node)
         {
-            hash_node_t *next;
+            node_t *next;
             
             next = node->next;
             hashmap_put(h, node->ety.key, node->ety.val);
@@ -421,9 +421,9 @@ void* hashmap_iterator_peek(
     {
         for (; iter->cur < h->arraySize; iter->cur++)
         {
-            hash_node_t *node;
+            node_t *node;
 
-            node = &((hash_node_t *) h->array)[iter->cur];
+            node = &((node_t *) h->array)[iter->cur];
 
             if (node->ety.key)
                 return node->ety.key;
@@ -433,7 +433,7 @@ void* hashmap_iterator_peek(
     }
     else
     {
-        hash_node_t *node;
+        node_t *node;
 
         node = iter->cur_linked;
         return node->ety.key;
@@ -472,16 +472,16 @@ void *hashmap_iterator_next(
     hashmap_iterator_t * iter
 )
 {
-    hash_node_t *n;
+    node_t *n;
 
     assert(iter);
 
     /* if we have a node ready to look at on the chain.. */
     if ((n = iter->cur_linked))
     {
-        hash_node_t *n_parent;
+        node_t *n_parent;
 
-        n_parent = &((hash_node_t *) h->array)[iter->cur];
+        n_parent = &((node_t *) h->array)[iter->cur];
 
         /* check that we aren't following a dangling pointer.
          * There is a chance that cur_linked is now on the array. */
@@ -505,7 +505,7 @@ void *hashmap_iterator_next(
     {
         for (; iter->cur < h->arraySize; iter->cur++)
         {
-            n = &((hash_node_t *) h->array)[iter->cur];
+            n = &((node_t *) h->array)[iter->cur];
 
             if (n->ety.key)
                 break;
@@ -517,7 +517,7 @@ void *hashmap_iterator_next(
             return NULL;
         }
 
-        n = &((hash_node_t *) h->array)[iter->cur];
+        n = &((node_t *) h->array)[iter->cur];
 
         if (n->next)
         {
