@@ -162,7 +162,7 @@ void TestHashmaplinked_PutEntry(
 )
 {
     hashmap_t *hm;
-    hash_entry_t entry;
+    hashmap_entry_t entry;
 
     hm = hashmap_new(__uint_hash, __uint_compare, 11);
     entry.key = (void *) 50;

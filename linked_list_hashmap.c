@@ -42,7 +42,7 @@ typedef struct node_s node_t;
 
 struct node_s
 {
-    entry_t ety;
+    hashmap_entry_t ety;
     node_t *next;
 };
 
@@ -206,7 +206,7 @@ int hashmap_contains_key(
 
 void hashmap_remove_entry(
     hashmap_t * h,
-    entry_t * entry,
+    hashmap_entry_t * entry,
     const void *key
 )
 {
@@ -228,7 +228,7 @@ void hashmap_remove_entry(
             continue;
         }
 
-        memcpy(entry, &n->ety, sizeof(entry_t));
+        memcpy(entry, &n->ety, sizeof(hashmap_entry_t));
 
         /* I am a root node on the array */
         if (!n_parent)
@@ -239,7 +239,7 @@ void hashmap_remove_entry(
                 node_t *tmp;
                 
                 tmp = n->next;
-                memcpy(&n->ety, &tmp->ety, sizeof(entry_t));
+                memcpy(&n->ety, &tmp->ety, sizeof(hashmap_entry_t));
                 /* Replace me with my next on chain */
                 n->next = tmp->next;
                 free(tmp);
@@ -272,7 +272,7 @@ void *hashmap_remove(
     const void *key
 )
 {
-    entry_t entry;
+    hashmap_entry_t entry;
 
     hashmap_remove_entry(h, &entry, key);
     return (void *) entry.val;
@@ -346,7 +346,7 @@ void *hashmap_put(
 
 void hashmap_put_entry(
     hashmap_t * h,
-    entry_t * entry
+    hashmap_entry_t * entry
 )
 {
     hashmap_put(h, entry->key, entry->val);

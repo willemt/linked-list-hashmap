@@ -9,7 +9,7 @@ typedef struct
 {
     void *key;
     void *val;
-} entry_t;
+} hashmap_entry_t;
 
 typedef struct
 {
@@ -81,7 +81,7 @@ int hashmap_contains_key(
  * Remove the value refrenced by this key from the hash. */
 void hashmap_remove_entry(
     hashmap_t * hmap,
-    entry_t * entry,
+    hashmap_entry_t * entry,
     const void *key
 );
 
@@ -107,7 +107,7 @@ void *hashmap_put(
  * Put this key/value entry into the hash */
 void hashmap_put_entry(
     hashmap_t * hmap,
-    entry_t * entry
+    hashmap_entry_t * entry
 );
 
 void* hashmap_iterator_peek(
