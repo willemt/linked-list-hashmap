@@ -142,6 +142,7 @@ void hashmap_free(
 {
     assert(h);
     hashmap_clear(h);
+    free(h->array);
 }
 
 void hashmap_freeall(
